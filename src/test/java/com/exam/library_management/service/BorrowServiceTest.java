@@ -64,8 +64,12 @@ class BorrowServiceTest {
         when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
                 .thenReturn(Optional.of(new BorrowRecord()));
 
-        assertThrows(BadRequestException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> borrowService.borrowBook(user, 1L));
+        assertEquals(
+                "You already have a borrowed book. Please return it first.",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -77,8 +81,9 @@ class BorrowServiceTest {
         when(bookRepository.findById(1L))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> borrowService.borrowBook(user, 1L));
+        assertEquals("Book not found", exception.getMessage());
     }
 
     @Test
@@ -92,12 +97,16 @@ class BorrowServiceTest {
         when(bookRepository.findById(1L))
                 .thenReturn(Optional.of(book));
 
-        assertThrows(BadRequestException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> borrowService.borrowBook(user, 1L));
+        assertEquals(
+                "This book is currently not available for borrowing",
+                exception.getMessage()
+        );
     }
 
     @Test
-    void borrowBook_shouldBorrowSuccessfully() {
+    void borrowBook_shouldBorrowSuccessfully_WithConfiguredDuration() {
 
         when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
                 .thenReturn(Optional.empty());
@@ -106,7 +115,7 @@ class BorrowServiceTest {
                 .thenReturn(Optional.of(book));
 
         when(libraryProperties.getBorrowDurationDays())
-                .thenReturn(14);
+                .thenReturn(21);
 
         when(borrowRecordRepository.save(any(BorrowRecord.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -116,7 +125,8 @@ class BorrowServiceTest {
         assertEquals(BookStatus.BORROWED, book.getStatus());
         assertEquals(user, result.getUser());
         assertEquals(book, result.getBook());
-        assertEquals(LocalDate.now().plusDays(14), result.getDueDate());
+        assertEquals(LocalDate.now(), result.getBorrowDate());
+        assertEquals(LocalDate.now().plusDays(21), result.getDueDate());
 
         verify(bookRepository).save(book);
         verify(borrowRecordRepository).save(any(BorrowRecord.class));
@@ -132,8 +142,12 @@ class BorrowServiceTest {
         when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
                 .thenReturn(Optional.empty());
 
-        assertThrows(BadRequestException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> borrowService.returnBook(user));
+        assertEquals(
+                "You do not have any borrowed book to return",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -153,6 +167,7 @@ class BorrowServiceTest {
         BorrowRecord result = borrowService.returnBook(user);
 
         assertEquals(BigDecimal.ZERO, result.getLateFee());
+        assertEquals(LocalDate.now(), result.getReturnDate());
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
 
         verify(bookRepository).save(book);
@@ -186,5 +201,24 @@ class BorrowServiceTest {
 
         verify(bookRepository).save(book);
         verify(borrowRecordRepository).save(record);
+    }
+
+    @Test
+    void returnBook_shouldUseConfiguredLateFeePerDay_WhenLate() {
+        BorrowRecord record = new BorrowRecord();
+        record.setUser(user);
+        record.setBook(book);
+        record.setDueDate(LocalDate.now().minusDays(2));
+
+        when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
+                .thenReturn(Optional.of(record));
+        when(libraryProperties.getLateFeePerDay())
+                .thenReturn(7);
+        when(borrowRecordRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        BorrowRecord result = borrowService.returnBook(user);
+
+        assertEquals(BigDecimal.valueOf(14), result.getLateFee());
     }
 }

@@ -5,9 +5,9 @@ import com.exam.library_management.entity.Book;
 import com.exam.library_management.entity.BorrowRecord;
 import com.exam.library_management.entity.User;
 import com.exam.library_management.repository.BorrowRecordRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,8 +25,15 @@ class MonthlyReportServiceTest {
     @Mock
     private BorrowRecordRepository borrowRepo;
 
-    @InjectMocks
     private MonthlyReportService monthlyReportService;
+
+    @BeforeEach
+    void setUp() {
+        monthlyReportService = new MonthlyReportService(
+                borrowRepo,
+                "0 59 23 L * ?"
+        );
+    }
 
     @Test
     void generateMonthlyReport_shouldCallAllRepositoryMethods() {
@@ -71,6 +78,7 @@ class MonthlyReportServiceTest {
         verify(borrowRepo).findByReturnDateBetween(any(), any());
         verify(borrowRepo).findOverdueBooks(any());
         verify(borrowRepo).getUserActivitySummary(any(), any());
+        verifyNoMoreInteractions(borrowRepo);
     }
 
 
@@ -95,6 +103,7 @@ class MonthlyReportServiceTest {
         verify(borrowRepo).findByReturnDateBetween(any(), any());
         verify(borrowRepo).findOverdueBooks(any());
         verify(borrowRepo).getUserActivitySummary(any(), any());
+        verifyNoMoreInteractions(borrowRepo);
     }
 
     @Test
@@ -122,5 +131,6 @@ class MonthlyReportServiceTest {
         verify(borrowRepo).findByReturnDateBetween(expectedStart, expectedEnd);
         verify(borrowRepo).getUserActivitySummary(expectedStart, expectedEnd);
         verify(borrowRepo).findOverdueBooks(expectedEnd);
+        verifyNoMoreInteractions(borrowRepo);
     }
 }

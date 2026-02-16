@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -65,8 +66,16 @@ class UserServiceTest {
         assertEquals(email, response.getEmail());
         assertEquals(Role.USER, response.getRole());
 
-        verify(userRepository).save(any(User.class));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
         verify(passwordEncoder).encode(rawPassword);
+
+        User persisted = userCaptor.getValue();
+        assertEquals(libraryId, persisted.getLibraryId());
+        assertEquals(email, persisted.getEmail());
+        assertEquals("encodedPassword", persisted.getPassword());
+        assertEquals(Role.USER, persisted.getRole());
+        assertNotNull(persisted.getCreatedAt());
     }
 
     // =====================================================
@@ -153,6 +162,17 @@ class UserServiceTest {
         boolean result = userService.existsByEmail(email);
 
         assertTrue(result);
+        verify(userRepository).existsByEmail(email);
+    }
+
+    @Test
+    void existsByEmail_shouldReturnFalse() {
+
+        when(userRepository.existsByEmail(email)).thenReturn(false);
+
+        boolean result = userService.existsByEmail(email);
+
+        assertFalse(result);
         verify(userRepository).existsByEmail(email);
     }
 }

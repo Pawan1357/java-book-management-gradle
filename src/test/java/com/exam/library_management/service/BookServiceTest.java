@@ -230,8 +230,10 @@ class BookServiceTest {
         when(bookRepository.save(any(Book.class)))
                 .thenThrow(DataIntegrityViolationException.class);
 
-        assertThrows(BadRequestException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> bookService.addBook(book));
+
+        assertEquals("Book with this code already exists", exception.getMessage());
     }
 
     /* ==========================
@@ -333,6 +335,24 @@ class BookServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> bookService.deleteBook(1L));
+    }
+
+    @Test
+    void deleteBook_ShouldThrowBadRequest_WhenLinkedBorrowRecordsExist() {
+        when(bookRepository.existsById(1L)).thenReturn(true);
+        doThrow(DataIntegrityViolationException.class)
+                .when(bookRepository).deleteById(1L);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> bookService.deleteBook(1L)
+        );
+
+        assertEquals(
+                "Cannot delete book because it is linked to borrow records",
+                exception.getMessage()
+        );
+        verify(bookRepository).deleteById(1L);
     }
 
     /* ==========================

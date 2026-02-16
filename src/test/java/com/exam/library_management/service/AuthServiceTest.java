@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -70,9 +72,15 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mocked-jwt-token", response.getToken());
 
+        ArgumentCaptor<UsernamePasswordAuthenticationToken> authCaptor =
+                ArgumentCaptor.forClass(UsernamePasswordAuthenticationToken.class);
+
         // Verify interactions
         verify(authenticationManager, times(1))
-                .authenticate(any());
+                .authenticate(authCaptor.capture());
+
+        assertEquals("test@library.com", authCaptor.getValue().getPrincipal());
+        assertEquals("password123", authCaptor.getValue().getCredentials());
 
         verify(userDetailsService, times(1))
                 .loadUserByUsername("test@library.com");
@@ -103,6 +111,26 @@ class AuthServiceTest {
         verify(userDetailsService, never())
                 .loadUserByUsername(any());
 
+        verify(jwtUtil, never())
+                .generateToken(any());
+    }
+
+    @Test
+    void login_authenticationException_shouldThrowBadRequestException() {
+
+        doThrow(new org.springframework.security.authentication.AccountExpiredException("expired"))
+                .when(authenticationManager)
+                .authenticate(any());
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> authService.login(loginRequest)
+        );
+
+        assertEquals("Invalid username or password", exception.getMessage());
+
+        verify(userDetailsService, never())
+                .loadUserByUsername(any());
         verify(jwtUtil, never())
                 .generateToken(any());
     }
