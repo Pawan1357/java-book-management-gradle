@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse<>(
                         false,
-                        "Book with this book code already exists",
+                        "Data integrity violation",
                         null
                 ));
     }

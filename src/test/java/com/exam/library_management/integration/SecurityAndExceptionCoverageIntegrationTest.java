@@ -130,7 +130,7 @@ public class SecurityAndExceptionCoverageIntegrationTest extends BaseIntegration
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Book with this book code already exists"));
+                .andExpect(jsonPath("$.message").value("Data integrity violation"));
     }
 
     @Test

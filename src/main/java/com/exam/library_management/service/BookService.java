@@ -55,7 +55,13 @@ public class BookService {
         if (!bookRepository.existsById(id)) {
             throw new ResourceNotFoundException("Book not found");
         }
-        bookRepository.deleteById(id);
+        try {
+            bookRepository.deleteById(id);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BadRequestException(
+                    "Cannot delete book because it is linked to borrow records"
+            );
+        }
     }
 
     /* ADMIN */
