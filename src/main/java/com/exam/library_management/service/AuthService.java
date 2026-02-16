@@ -47,6 +47,7 @@ import com.exam.library_management.security.JwtUtil;
 import com.exam.library_management.dto.LoginRequest;
 import com.exam.library_management.dto.LoginResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -66,24 +67,28 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
 
         try{
-        // 1️⃣ Delegate authentication to Spring Security
-        authenticationManager.authenticate(
+        // Authenticate credentials once and reuse authenticated principal when available.
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
 
-        // 2️⃣ Load authenticated user
-        UserDetails userDetails =
-                userDetailsService.loadUserByUsername(request.getUsername());
+        UserDetails userDetails = resolveUserDetails(authentication, request.getUsername());
 
-        // 3️⃣ Generate JWT from UserDetails
         String token = jwtUtil.generateToken(userDetails);
 
         return new LoginResponse(token);
         } catch (AuthenticationException ex){
                 throw new BadRequestException("Invalid username or password");
         }
+    }
+
+    private UserDetails resolveUserDetails(Authentication authentication, String username) {
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            return userDetails;
+        }
+        return userDetailsService.loadUserByUsername(username);
     }
 }

@@ -43,8 +43,7 @@ class UserServiceTest {
     @Test
     void registerUser_success() {
 
-        when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(userRepository.existsByLibraryId(libraryId)).thenReturn(false);
+        when(userRepository.findByEmailOrLibraryId(email, libraryId)).thenReturn(java.util.Optional.empty());
         when(passwordEncoder.encode(rawPassword)).thenReturn("encodedPassword");
 
         User savedUser = new User();
@@ -84,7 +83,11 @@ class UserServiceTest {
     @Test
     void registerUser_emailAlreadyExists_shouldThrowException() {
 
-        when(userRepository.existsByEmail(email)).thenReturn(true);
+        User existingUser = new User();
+        existingUser.setEmail(email);
+        existingUser.setLibraryId("OTHER_LIB");
+        when(userRepository.findByEmailOrLibraryId(email, libraryId))
+                .thenReturn(java.util.Optional.of(existingUser));
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
@@ -107,8 +110,11 @@ class UserServiceTest {
     @Test
     void registerUser_libraryIdAlreadyExists_shouldThrowException() {
 
-        when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(userRepository.existsByLibraryId(libraryId)).thenReturn(true);
+        User existingUser = new User();
+        existingUser.setEmail("other@test.com");
+        existingUser.setLibraryId(libraryId);
+        when(userRepository.findByEmailOrLibraryId(email, libraryId))
+                .thenReturn(java.util.Optional.of(existingUser));
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
@@ -131,8 +137,7 @@ class UserServiceTest {
     @Test
     void registerUser_dataIntegrityViolation_shouldThrowDuplicateResourceException() {
 
-        when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(userRepository.existsByLibraryId(libraryId)).thenReturn(false);
+        when(userRepository.findByEmailOrLibraryId(email, libraryId)).thenReturn(java.util.Optional.empty());
         when(passwordEncoder.encode(rawPassword)).thenReturn("encodedPassword");
 
         when(userRepository.save(any(User.class)))

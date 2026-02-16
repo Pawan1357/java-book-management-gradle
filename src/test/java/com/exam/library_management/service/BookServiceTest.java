@@ -188,6 +188,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -322,8 +323,6 @@ class BookServiceTest {
 
     @Test
     void deleteBook_ShouldDelete_WhenBookExists() {
-        when(bookRepository.existsById(1L)).thenReturn(true);
-
         bookService.deleteBook(1L);
 
         verify(bookRepository).deleteById(1L);
@@ -331,7 +330,8 @@ class BookServiceTest {
 
     @Test
     void deleteBook_ShouldThrowException_WhenNotFound() {
-        when(bookRepository.existsById(1L)).thenReturn(false);
+        doThrow(EmptyResultDataAccessException.class)
+                .when(bookRepository).deleteById(1L);
 
         assertThrows(ResourceNotFoundException.class,
                 () -> bookService.deleteBook(1L));
@@ -339,7 +339,6 @@ class BookServiceTest {
 
     @Test
     void deleteBook_ShouldThrowBadRequest_WhenLinkedBorrowRecordsExist() {
-        when(bookRepository.existsById(1L)).thenReturn(true);
         doThrow(DataIntegrityViolationException.class)
                 .when(bookRepository).deleteById(1L);
 

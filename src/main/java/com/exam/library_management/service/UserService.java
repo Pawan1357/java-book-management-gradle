@@ -27,13 +27,15 @@ public class UserService {
                              String rawPassword,
                              Role role) {
 
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        if (userRepository.existsByLibraryId(libraryId)) {
-            throw new RuntimeException("Library ID already exists");
-        }
+        userRepository.findByEmailOrLibraryId(email, libraryId)
+                .ifPresent(existingUser -> {
+                    if (existingUser.getEmail().equalsIgnoreCase(email)) {
+                        throw new RuntimeException("Email already exists");
+                    }
+                    if (existingUser.getLibraryId().equals(libraryId)) {
+                        throw new RuntimeException("Library ID already exists");
+                    }
+                });
 
         try {
             User user = new User();
