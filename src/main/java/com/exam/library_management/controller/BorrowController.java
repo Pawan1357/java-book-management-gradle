@@ -7,9 +7,9 @@ import com.exam.library_management.entity.User;
 import com.exam.library_management.repository.UserRepository;
 import com.exam.library_management.service.BorrowService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.exam.library_management.enums.Role;
 import com.exam.library_management.exception.BadRequestException;
 
 import java.time.LocalDate;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping("/api/user/borrow")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('USER')")
 public class BorrowController {
 
     private final BorrowService borrowService;
@@ -37,11 +38,6 @@ public class BorrowController {
         User user = userRepository
                 .findByEmail(authentication.getName())
                 .orElseThrow();
-
-        if (user.getRole() != Role.USER) {
-                throw new BadRequestException("Only users can borrow books");
-        }
-
 
         // return borrowService.borrowBook(user, bookId);
         BorrowRecord record = borrowService.borrowBook(user, bookId);

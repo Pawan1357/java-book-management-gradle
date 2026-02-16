@@ -4,6 +4,7 @@ import com.exam.library_management.entity.BorrowRecord;
 import com.exam.library_management.dto.ApiResponse;
 import com.exam.library_management.repository.BorrowRecordRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/borrow-records")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminBorrowController {
 
     private final BorrowRecordRepository repository;

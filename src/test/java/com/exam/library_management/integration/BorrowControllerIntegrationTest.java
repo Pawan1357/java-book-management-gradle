@@ -6,7 +6,6 @@ import com.exam.library_management.entity.BorrowRecord;
 import com.exam.library_management.entity.User;
 import com.exam.library_management.enums.BookStatus;
 import com.exam.library_management.enums.Role;
-import com.exam.library_management.exception.BadRequestException;
 import com.exam.library_management.repository.BookRepository;
 import com.exam.library_management.repository.BorrowRecordRepository;
 import com.exam.library_management.repository.UserRepository;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -275,7 +274,7 @@ public class BorrowControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenRoleIsNotUserInsideBorrowControllerGuard() throws Exception {
+    void shouldReturnForbiddenWhenSpringSecurityRoleIsAdminForBorrowPath() throws Exception {
         String unique = UUID.randomUUID().toString().substring(0, 8);
         String adminEmail = "guard-admin-" + unique + "@test.com";
 
@@ -290,31 +289,29 @@ public class BorrowControllerIntegrationTest extends BaseIntegrationTest {
         Book book = saveAvailableBook("BORROW-8001", "Guard Book", "Guard Author");
 
         mockMvc.perform(post("/api/user/borrow/book/{bookId}", book.getId())
-                        .with(user(adminEmail).roles("USER")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Only users can borrow books"));
+                        .with(user(adminEmail).roles("ADMIN")))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void shouldReturnBadRequestWhenAuthenticationIsNullInReturnControllerMethod() {
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
+    void shouldBlockDirectControllerCallWithoutSecurityContextWhenAuthenticationIsNull() {
+        assertThrows(
+                AuthenticationCredentialsNotFoundException.class,
                 () -> borrowController.returnBook(null)
         );
-        assertEquals("Authentication required", ex.getMessage());
     }
 
     @Test
-    void shouldReturnBadRequestWhenAuthenticatedUserNotFoundInReturnControllerMethod() {
-        TestingAuthenticationToken auth =
-                new TestingAuthenticationToken("missing-user@test.com", "n/a");
-
-        BadRequestException ex = assertThrows(
-                BadRequestException.class,
-                () -> borrowController.returnBook(auth)
+    void shouldBlockDirectControllerCallWithoutSecurityContextWhenUserMissing() {
+        assertThrows(
+                AuthenticationCredentialsNotFoundException.class,
+                () -> borrowController.returnBook(
+                        new org.springframework.security.authentication.TestingAuthenticationToken(
+                                "missing-user@test.com",
+                                "n/a"
+                        )
+                )
         );
-        assertEquals("Authenticated user not found", ex.getMessage());
     }
 
     @Test
