@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/library_db
+    username: root
+    password: Admin@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: mySuperSecretKeyForJwtTokenGeneration123456
+  expiration: 86400000 # 1 day in milliseconds
+
+library:
+  borrow-duration-days: 14
+  late-fee-per-day: 10
+  report:
+    # End-of-month at 23:59 by default. Override for local testing if needed.
+    cron: "0 59 23 L * ?"
