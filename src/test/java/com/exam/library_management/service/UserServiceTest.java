@@ -89,8 +89,8 @@ class UserServiceTest {
         when(userRepository.findByEmailOrLibraryId(email, libraryId))
                 .thenReturn(java.util.Optional.of(existingUser));
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        DuplicateResourceException exception = assertThrows(
+                DuplicateResourceException.class,
                 () -> userService.registerUser(
                         libraryId,
                         email,
@@ -116,8 +116,8 @@ class UserServiceTest {
         when(userRepository.findByEmailOrLibraryId(email, libraryId))
                 .thenReturn(java.util.Optional.of(existingUser));
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        DuplicateResourceException exception = assertThrows(
+                DuplicateResourceException.class,
                 () -> userService.registerUser(
                         libraryId,
                         email,

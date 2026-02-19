@@ -45,7 +45,9 @@ class BookAdminControllerTest {
     void addBook_success() throws Exception {
 
         Book book = new Book();
+        book.setBookCode("BOOK-1001");
         book.setTitle("Spring Boot");
+        book.setAuthor("Author A");
 
         when(bookService.addBook(any(Book.class)))
                 .thenReturn(book);
@@ -59,6 +61,29 @@ class BookAdminControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Spring Boot"));
 
         verify(bookService, times(1)).addBook(any(Book.class));
+    }
+
+    @Test
+    @DisplayName("Add book - validation error")
+    @WithMockUser(roles = "ADMIN")
+    void addBook_validationError() throws Exception {
+
+        String invalidPayload = """
+                {
+                  "bookCode": "",
+                  "title": "",
+                  "author": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/admin/books/add")
+                        .contentType("application/json")
+                        .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Validation failed"));
+
+        verify(bookService, never()).addBook(any(Book.class));
     }
 
     // -------------------------------------------------

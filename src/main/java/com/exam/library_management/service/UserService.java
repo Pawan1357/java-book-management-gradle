@@ -30,10 +30,10 @@ public class UserService {
         userRepository.findByEmailOrLibraryId(email, libraryId)
                 .ifPresent(existingUser -> {
                     if (existingUser.getEmail().equalsIgnoreCase(email)) {
-                        throw new RuntimeException("Email already exists");
+                        throw new DuplicateResourceException("Email already exists");
                     }
                     if (existingUser.getLibraryId().equals(libraryId)) {
-                        throw new RuntimeException("Library ID already exists");
+                        throw new DuplicateResourceException("Library ID already exists");
                     }
                 });
 

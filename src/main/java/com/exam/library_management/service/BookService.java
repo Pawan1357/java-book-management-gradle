@@ -8,7 +8,6 @@ import com.exam.library_management.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.util.List;
 
@@ -58,10 +57,11 @@ public class BookService {
 
     /* ADMIN */
     public void deleteBook(Long id) {
+        if (!bookRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Book not found");
+        }
         try {
             bookRepository.deleteById(id);
-        } catch (EmptyResultDataAccessException ex) {
-            throw new ResourceNotFoundException("Book not found");
         } catch (DataIntegrityViolationException ex) {
             throw new BadRequestException(
                     "Cannot delete book because it is linked to borrow records"

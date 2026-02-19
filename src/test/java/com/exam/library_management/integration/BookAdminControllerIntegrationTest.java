@@ -144,6 +144,27 @@ public class BookAdminControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldReturnBadRequestForInvalidAddBookPayload() throws Exception {
+        String adminToken = createAdminAndLogin();
+
+        String invalidPayload = """
+                {
+                  "bookCode": "",
+                  "title": "Valid Title",
+                  "author": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/admin/books/add")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Validation failed"));
+    }
+
+    @Test
     void shouldReturnBadRequestForDuplicateBookCode() throws Exception {
         String adminToken = createAdminAndLogin();
 

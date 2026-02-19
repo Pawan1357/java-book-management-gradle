@@ -8,6 +8,7 @@ public class RegisterRequest {
     @NotBlank
     private String libraryId;
 
+    @NotBlank
     @Email
     private String email;
 
