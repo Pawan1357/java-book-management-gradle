@@ -37,13 +37,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
 
         http
-            // .authenticationProvider(authProvider)
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm ->
                     sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) ->{
-                    // response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
                     response.getWriter().write("""
@@ -51,7 +49,6 @@ public class SecurityConfig {
                     """);}
                 )
                 .accessDeniedHandler((request, response, accessDeniedException) ->{
-                    // response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
                     response.getWriter().write("""
@@ -61,15 +58,15 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers(
+                            "/v3/api-docs/**",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html"
+                    ).permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .requestMatchers("/api/user/**").hasRole("USER")
                     .anyRequest().authenticated()
             )
-            // .authorizeHttpRequests(auth -> auth
-            //     .requestMatchers("/api/auth/**").permitAll()
-            //     .anyRequest().authenticated()
-            // )
-
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -80,26 +77,4 @@ public class SecurityConfig {
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-    // @Bean
-    // public DaoAuthenticationProvider authenticationProvider(
-    //         CustomUserDetailsService userDetailsService,
-    //         PasswordEncoder passwordEncoder) {
-
-    //     DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-    //     provider.setUserDetailsService(userDetailsService);
-    //     provider.setPasswordEncoder(passwordEncoder);
-    //     return provider;
-    // }
-    // @PostConstruct
-    // public void loadEnv() {
-    //     Dotenv dotenv = Dotenv.configure()
-    //             .ignoreIfMissing()
-    //             .load();
-
-    //     dotenv.entries().forEach(entry -> {
-    //         System.setProperty(entry.getKey(), entry.getValue());
-    //     });
-    // }
-
 }

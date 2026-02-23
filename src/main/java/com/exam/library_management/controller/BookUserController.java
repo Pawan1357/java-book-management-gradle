@@ -20,7 +20,6 @@ public class BookUserController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Book>>> viewAvailableBooks() {
-        // return ResponseEntity.ok(bookService.getAvailableBooks());
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,

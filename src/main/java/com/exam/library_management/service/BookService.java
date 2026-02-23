@@ -39,6 +39,7 @@ public class BookService {
         if (updated.getTitle() == null
                 && updated.getAuthor() == null
                 && updated.getStatus() == null) {
+            // Treat empty patch payload as no-op and return current state.
             return book;
         }
 

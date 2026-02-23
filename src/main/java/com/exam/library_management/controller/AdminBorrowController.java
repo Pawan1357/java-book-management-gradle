@@ -19,7 +19,6 @@ public class AdminBorrowController {
 
     @GetMapping
     public ApiResponse<List<BorrowRecord>> all() {
-        // return repository.findAll();
         return new ApiResponse<>(
                 true,
                 "Borrow records fetched",

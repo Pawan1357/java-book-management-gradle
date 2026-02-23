@@ -39,7 +39,6 @@ public class BorrowController {
                 .findByEmail(authentication.getName())
                 .orElseThrow();
 
-        // return borrowService.borrowBook(user, bookId);
         BorrowRecord record = borrowService.borrowBook(user, bookId);
         return new ApiResponse<>(
                 true,
@@ -67,9 +66,9 @@ public class BorrowController {
                 .findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Authenticated user not found"));
 
-        // return borrowService.returnBook(user);
         BorrowRecord record = borrowService.returnBook(user);
 
+        // Service always sets lateFee; keep defensive fallback for backward compatibility.
         BigDecimal lateFee = record.getLateFee() != null ? record.getLateFee() : BigDecimal.ZERO;
 
         logger.info("Book returned successfully: recordId={}, lateFee={}", record.getId(), lateFee);
@@ -80,9 +79,4 @@ public class BorrowController {
                 Map.of("lateFee", lateFee)
         );
     }
-//      @PostMapping("/return")
-//      public String test() {
-//          System.out.println("🔥 RETURN ENDPOINT HIT");
-//          return "ok";
-//      }
 }
