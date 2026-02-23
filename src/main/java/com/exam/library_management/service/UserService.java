@@ -7,10 +7,12 @@ import com.exam.library_management.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -22,6 +24,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public UserResponse registerUser(String libraryId,
                              String email,
                              String rawPassword,
@@ -54,6 +57,9 @@ public class UserService {
             );
 
         } catch (DataIntegrityViolationException ex) {
+            if (userRepository.existsByLibraryId(libraryId)) {
+                throw new DuplicateResourceException("Library ID already exists");
+            }
             throw new DuplicateResourceException("Email already exists");
         }
     }

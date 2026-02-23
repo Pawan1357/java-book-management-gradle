@@ -254,7 +254,6 @@ class BookServiceTest {
         updated.setStatus(BookStatus.BORROWED);
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -275,7 +274,6 @@ class BookServiceTest {
         updated.setTitle("UpdatedTitle");
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -295,7 +293,6 @@ class BookServiceTest {
         Book updated = new Book(); // all null
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -322,16 +319,18 @@ class BookServiceTest {
 
     @Test
     void deleteBook_ShouldDelete_WhenBookExists() {
-        when(bookRepository.existsById(1L)).thenReturn(true);
+        Book existing = new Book();
+        existing.setId(1L);
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
 
         bookService.deleteBook(1L);
 
-        verify(bookRepository).deleteById(1L);
+        verify(bookRepository).delete(existing);
     }
 
     @Test
     void deleteBook_ShouldThrowException_WhenNotFound() {
-        when(bookRepository.existsById(1L)).thenReturn(false);
+        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> bookService.deleteBook(1L));
@@ -339,9 +338,11 @@ class BookServiceTest {
 
     @Test
     void deleteBook_ShouldThrowBadRequest_WhenLinkedBorrowRecordsExist() {
-        when(bookRepository.existsById(1L)).thenReturn(true);
+        Book existing = new Book();
+        existing.setId(1L);
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
         doThrow(DataIntegrityViolationException.class)
-                .when(bookRepository).deleteById(1L);
+                .when(bookRepository).delete(existing);
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
@@ -352,7 +353,7 @@ class BookServiceTest {
                 "Cannot delete book because it is linked to borrow records",
                 exception.getMessage()
         );
-        verify(bookRepository).deleteById(1L);
+        verify(bookRepository).delete(existing);
     }
 
     /* ==========================
@@ -397,7 +398,6 @@ class BookServiceTest {
         updated.setAuthor("NewAuthor");
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -418,7 +418,6 @@ class BookServiceTest {
         updated.setStatus(BookStatus.BORROWED);
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -440,7 +439,6 @@ class BookServiceTest {
         updated.setAuthor("NewAuthor");
 
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
 
         Book result = bookService.updateBook(1L, updated);
 
@@ -464,7 +462,6 @@ class BookServiceTest {
         updated.setStatus(null); // explicit null
     
         when(bookRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(bookRepository.save(any(Book.class))).thenReturn(existing);
     
         Book result = bookService.updateBook(1L, updated);
     
@@ -472,7 +469,6 @@ class BookServiceTest {
         assertEquals("NewAuthor", result.getAuthor());
         assertEquals(BookStatus.AVAILABLE, result.getStatus()); // unchanged
     
-        verify(bookRepository).save(existing);
     }
 
 }

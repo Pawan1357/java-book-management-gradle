@@ -8,20 +8,20 @@ import com.exam.library_management.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BookService {
 
     private final BookRepository bookRepository;
 
     /* ADMIN */
+    @Transactional
     public Book addBook(Book book) {
-        // book.setId(null); // safety
-        // book.setStatus(BookStatus.AVAILABLE);
-        // return bookRepository.save(book);
         try {
             book.setStatus(BookStatus.AVAILABLE);
             return bookRepository.save(book);
@@ -31,6 +31,7 @@ public class BookService {
     }
 
     /* ADMIN */
+    @Transactional
     public Book updateBook(Long id, Book updated) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
@@ -52,16 +53,16 @@ public class BookService {
         if (updated.getStatus() != null) {
             book.setStatus(updated.getStatus());
         }
-        return bookRepository.save(book);
+        return book;
     }
 
     /* ADMIN */
+    @Transactional
     public void deleteBook(Long id) {
-        if (!bookRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Book not found");
-        }
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         try {
-            bookRepository.deleteById(id);
+            bookRepository.delete(book);
         } catch (DataIntegrityViolationException ex) {
             throw new BadRequestException(
                     "Cannot delete book because it is linked to borrow records"

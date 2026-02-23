@@ -15,6 +15,7 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
 
     // Active borrow (not returned yet)
     Optional<BorrowRecord> findByUserAndReturnDateIsNull(User user);
+    boolean existsByUserAndReturnDateIsNull(User user);
 
     Optional<BorrowRecord> findByBookIdAndReturnDateIsNull(Long bookId);
 

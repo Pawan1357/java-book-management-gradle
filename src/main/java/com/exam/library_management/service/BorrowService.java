@@ -12,9 +12,8 @@ import com.exam.library_management.repository.BorrowRecordRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
@@ -29,23 +28,20 @@ public class BorrowService {
     private final BookRepository bookRepository;
     private final LibraryProperties libraryProperties;
 
-    private static final int BORROW_DAYS = 14;
-    private static final BigDecimal LATE_FEE_PER_DAY = BigDecimal.valueOf(10);
-
     private static final Logger logger = LoggerFactory.getLogger(BorrowService.class);
 
     /* =========================
        BORROW BOOK
        ========================= */
+    @Transactional
     public BorrowRecord borrowBook(User user, Long bookId) {
 
         // Rule 1: Only one active borrow per user
-        borrowRecordRepository.findByUserAndReturnDateIsNull(user)
-                .ifPresent(br -> {
-                    throw new BadRequestException(
-                            "You already have a borrowed book. Please return it first."
-                    );
-                });
+        if (borrowRecordRepository.existsByUserAndReturnDateIsNull(user)) {
+            throw new BadRequestException(
+                    "You already have a borrowed book. Please return it first."
+            );
+        }
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() ->
@@ -62,7 +58,6 @@ public class BorrowService {
 
         // Update book
         book.setStatus(BookStatus.BORROWED);
-        bookRepository.save(book);
 
         // Create borrow record
         BorrowRecord record = new BorrowRecord();
@@ -77,6 +72,7 @@ public class BorrowService {
     /* =========================
        RETURN BOOK
        ========================= */
+    @Transactional
     public BorrowRecord returnBook(User user) {
 
         logger.info("BorrowService.returnBook called for userId={}", user.getId());
@@ -94,29 +90,15 @@ public class BorrowService {
         BigDecimal lateFee = BigDecimal.ZERO;
         // Late fee calculation
         if (returnDate.isAfter(record.getDueDate())) {
-            long daysLate =
-                    ChronoUnit.DAYS.between(record.getDueDate(), returnDate);
-        //     record.setLateFee(
-        //             LATE_FEE_PER_DAY.multiply(BigDecimal.valueOf(daysLate))
-        //     );
-        //     lateFee = LATE_FEE_PER_DAY.multiply(BigDecimal.valueOf(daysLate));
-                lateFee = BigDecimal
-                            .valueOf(daysLate)
-                            .multiply(
-                                    BigDecimal.valueOf(
-                                            libraryProperties.getLateFeePerDay()
-                                    )
-                            );
+            long daysLate = ChronoUnit.DAYS.between(record.getDueDate(), returnDate);
+            lateFee = BigDecimal.valueOf(daysLate)
+                    .multiply(BigDecimal.valueOf(libraryProperties.getLateFeePerDay()));
         }
         record.setLateFee(lateFee);
-        //  else {
-        //     record.setLateFee(BigDecimal.ZERO);
-        // }
 
         // Update book
         Book book = record.getBook();
         book.setStatus(BookStatus.AVAILABLE);
-        bookRepository.save(book);
 
         BorrowRecord savedRecord = borrowRecordRepository.save(record);
         logger.info("Return record saved: recordId={}, lateFee={}", savedRecord.getId(), savedRecord.getLateFee());

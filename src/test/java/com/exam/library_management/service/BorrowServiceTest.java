@@ -61,8 +61,8 @@ class BorrowServiceTest {
     @Test
     void borrowBook_shouldThrowIfUserAlreadyHasActiveBorrow() {
 
-        when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
-                .thenReturn(Optional.of(new BorrowRecord()));
+        when(borrowRecordRepository.existsByUserAndReturnDateIsNull(user))
+                .thenReturn(true);
 
         BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> borrowService.borrowBook(user, 1L));
@@ -75,8 +75,8 @@ class BorrowServiceTest {
     @Test
     void borrowBook_shouldThrowIfBookNotFound() {
 
-        when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
-                .thenReturn(Optional.empty());
+        when(borrowRecordRepository.existsByUserAndReturnDateIsNull(user))
+                .thenReturn(false);
 
         when(bookRepository.findById(1L))
                 .thenReturn(Optional.empty());
@@ -91,8 +91,8 @@ class BorrowServiceTest {
 
         book.setStatus(BookStatus.BORROWED);
 
-        when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
-                .thenReturn(Optional.empty());
+        when(borrowRecordRepository.existsByUserAndReturnDateIsNull(user))
+                .thenReturn(false);
 
         when(bookRepository.findById(1L))
                 .thenReturn(Optional.of(book));
@@ -108,8 +108,8 @@ class BorrowServiceTest {
     @Test
     void borrowBook_shouldBorrowSuccessfully_WithConfiguredDuration() {
 
-        when(borrowRecordRepository.findByUserAndReturnDateIsNull(user))
-                .thenReturn(Optional.empty());
+        when(borrowRecordRepository.existsByUserAndReturnDateIsNull(user))
+                .thenReturn(false);
 
         when(bookRepository.findById(1L))
                 .thenReturn(Optional.of(book));
@@ -128,7 +128,6 @@ class BorrowServiceTest {
         assertEquals(LocalDate.now(), result.getBorrowDate());
         assertEquals(LocalDate.now().plusDays(21), result.getDueDate());
 
-        verify(bookRepository).save(book);
         verify(borrowRecordRepository).save(any(BorrowRecord.class));
     }
 
@@ -170,7 +169,6 @@ class BorrowServiceTest {
         assertEquals(LocalDate.now(), result.getReturnDate());
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
 
-        verify(bookRepository).save(book);
         verify(borrowRecordRepository).save(record);
     }
 
@@ -199,7 +197,6 @@ class BorrowServiceTest {
         assertEquals(expected, result.getLateFee());
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
 
-        verify(bookRepository).save(book);
         verify(borrowRecordRepository).save(record);
     }
 

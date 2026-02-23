@@ -13,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -22,10 +20,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
-
-    // public AuthController(AuthService authService) {
-    //     this.authService = authService;
-    // }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse>> register(@RequestBody @Valid RegisterRequest request) {
@@ -41,15 +35,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-
-        // String token = authService.login(
-        //         request.getUsername(),
-        //         request.getPassword()
-        // );
-
-        // return ResponseEntity.ok(
-        //         Map.of("token", token)
-        // );
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", response));
     }
